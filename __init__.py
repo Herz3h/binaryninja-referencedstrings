@@ -13,19 +13,23 @@ class SetStringsTask(BackgroundTaskThread):
         self.set_strings(self.bv)
 
     def set_strings(self, bv):
-        log.log_debug('here')
         for func in bv.functions:
             for bb in func.low_level_il.basic_blocks:
                 for inst in bb:
-                    if inst.operation == LowLevelILOperation.LLIL_PUSH:
-                        if inst.src.operation == LowLevelILOperation.LLIL_CONST:
-                            strings = bv.get_strings(inst.src.value.value, 0x32)
-                            if len(strings) != 0:
-                                if strings[0].start == inst.src.value.value:
-                                    comment = str(bv.read(strings[0].start, strings[0].length))
-                                    old_comment = func.get_comment_at(inst.address)
+                    if inst.operation == LowLevelILOperation.LLIL_PUSH and inst.src.operation == LowLevelILOperation.LLIL_CONST:
+                        # 0x32 bytes of data
+                        inst_value = inst.src.value.value
+                        strings = bv.get_strings(inst_value, 0x32)
+
+                        # get_strings returns an array of strings at an address, so check first string if located at same requested get_strings address
+                        if len(strings) != 0 and strings[0].start == inst_value:
+                            first_string = strings[0]
+                                comment = str(bv.read(first_string.start, first_string.length))
+                                old_comment = func.get_comment_at(inst.address)
+                                func.set_comment(inst.address, old_comment + comment)
+
+                                # don't add already added comment
+                                if comment not in old_comment:
                                     func.set_comment(inst.address, old_comment + comment)
-                                    if comment not in old_comment:
-                                        func.set_comment(inst.address, old_comment + comment)
 
 PluginCommand.register_for_address("Set Referenced Strings", "Sets referenced strings as comments whenever a pointer is found and points to a string even if the section is writable", start_set_strings_task)
