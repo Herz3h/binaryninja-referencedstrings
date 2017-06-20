@@ -28,4 +28,4 @@ class SetStringsTask(BackgroundTaskThread):
                                     if comment not in old_comment:
                                         func.set_comment(inst.address, old_comment + comment)
 
-PluginCommand.register_for_address("Set Referenced Strings", "Sets strings referenced strings as comments whenever a pointer is found and points to a string even if the section is writable", start_set_strings_task)
+PluginCommand.register_for_address("Set Referenced Strings", "Sets referenced strings as comments whenever a pointer is found and points to a string even if the section is writable", start_set_strings_task)
